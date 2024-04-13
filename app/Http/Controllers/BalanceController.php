@@ -62,59 +62,59 @@ class BalanceController extends Controller
     }
 
     public function showChart(Request $request)
-{
-    // Get the authenticated user
-    $user = auth()->user();
+    {
+        // Get the authenticated user
+        $user = auth()->user();
 
-    // Get start and end dates from the request
-    $startDate = $request->input('start_date');
-    $endDate = $request->input('end_date');
+        // Get start and end dates from the request
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
 
-    // Get the balance changes from the database, filtered by start and end dates
-    $balanceChanges = BalanceChange::where('user_id', $user->id)
-                                    ->whereBetween('transaction_date', [$startDate, $endDate])
-                                    ->orderBy('transaction_date')
-                                    ->get();
+        // Get the balance changes from the database, filtered by start and end dates
+        $balanceChanges = BalanceChange::where('user_id', $user->id)
+                                        ->whereBetween('transaction_date', [$startDate, $endDate])
+                                        ->orderBy('transaction_date')
+                                        ->get();
 
-    // Initialize arrays to store labels and data for the chart
-    $labels = [];
-    $data = [];
+        // Initialize arrays to store labels and data for the chart
+        $labels = [];
+        $data = [];
 
 
-    // Set the initial absolute balance
-    $absoluteBalance = 0;
+        // Set the initial absolute balance
+        $absoluteBalance = 0;
 
-    // Flag to check if it's the first change
-    $firstChange = true;
+        // Flag to check if it's the first change
+        $firstChange = true;
 
-    // Loop through each balance change
-    foreach ($balanceChanges as $change) {
-        // If it's the first change, set the absolute balance
-        if ($firstChange) {
-            // If the first change is an addition, subtract its amount from the initial balance
+        // Loop through each balance change
+        foreach ($balanceChanges as $change) {
+            // If it's the first change, set the absolute balance
+            if ($firstChange) {
+                // If the first change is an addition, subtract its amount from the initial balance
+                if ($change->change_type === 'addition') {
+                    $absoluteBalance = $change->amount;
+                }
+                $firstChange = false; // Set the flag to false after processing the first change
+            } else {
+
+                // Update the absolute balance based on the change type
             if ($change->change_type === 'addition') {
-                $absoluteBalance = $change->amount;
+                $absoluteBalance += $change->amount;
+            } elseif ($change->change_type === 'subtraction') {
+                $absoluteBalance -= $change->amount;
             }
-            $firstChange = false; // Set the flag to false after processing the first change
-        } else {
 
-            // Update the absolute balance based on the change type
-        if ($change->change_type === 'addition') {
-            $absoluteBalance += $change->amount;
-        } elseif ($change->change_type === 'subtraction') {
-            $absoluteBalance -= $change->amount;
+            // Add the transaction date and absolute balance to the arrays
+            $labels[] = $change->transaction_date;
+            $data[] = $absoluteBalance;
+            }
         }
 
-        // Add the transaction date and absolute balance to the arrays
-        $labels[] = $change->transaction_date;
-        $data[] = $absoluteBalance;
-        }
+        // Pass the processed data to the view
+        return view('balance_chart', [
+            'labels' => $labels,
+            'data' => $data,
+        ]);
     }
-
-    // Pass the processed data to the view
-    return view('balance_chart', [
-        'labels' => $labels,
-        'data' => $data,
-    ]);
-}
 }
