@@ -13,7 +13,7 @@ Balance Tracker is a web application built with Laravel that allows users to tra
 1. Clone the repository:
 
 ```
-git clone <repository-url>
+git clone <github.com/MohsenBizhani/balance_tracker>
 ```
 
 2. Install Composer dependencies:
